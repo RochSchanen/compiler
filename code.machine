@@ -16,18 +16,21 @@ x: mem 16 = "ABCDEF"
 
 start:
 
+xfr r4 continue $0
+xfr r5 continue $1
+
 xfr r0 x
 
 continue:
 
 	xfr r1 [r0]
 
-	eor r1 0 # test
+	eor r1 0 	# test character
 	jze done
 
 	dsp r1
 
 	adc r0 1
-	jmp continue
+	jmp r4, r5
 
 done:

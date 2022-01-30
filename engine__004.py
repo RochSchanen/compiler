@@ -426,8 +426,8 @@ class engine():
 
 # ---- ---- ---- ---- lists and dicts
 
-    ll = {}     # labels list
     il = []     # instructions list
+    ll = {}     # labels list
     ml = {}     # memory references
     MM = []     # memory storage
 
@@ -537,8 +537,32 @@ class engine():
         r, n = self.getReference(s, p)
         if r is None: return fail
         
+        # line pointer
+
+        if not r in self.ml.keys():
+
+            # init vars
+            v = self.ll[r] # value
+            m = f"{r}:{v}" # message
+
+            # check for word filter
+            t, k = skipSpaces(s, n)
+            if s[k] == "$":
+                # skip spaces and get integer
+                i, k = getInt(s, k+1)
+                # check fail
+                if i is None: return fail
+                # continue
+                j = i * self.CFG["BITS"]
+                n, v, m = k, (v >> j) & self.MSK, f"{m} ${i}"
+
+            return v, n, m
+
+        # memory pointer
+
         # init vars
-        m, i, j, v = f"{r}:{self.ml[r]}", 0, 0, self.ml[r]
+        v = self.ml[r] # value
+        m = f"{r}:{v}" # message
 
         # check for offset
         t, k = skipSpaces(s, n)
@@ -555,8 +579,7 @@ class engine():
         t, k = skipSpaces(s, n)
         if s[k] == "$":
             # skip spaces and get integer
-            t, k = skipSpaces(s, k+1)
-            i, k = getInt(s, k)
+            i, k = getInt(s, k+1)
             # check fail
             if i is None: return fail
             # continue
@@ -651,7 +674,7 @@ class engine():
 
     def getmemsrc(self, args):
         fail = None, 0, ""
-        # get destination memory
+        # get destination memorylabels list
         d, n, m = self.getMemoryAddress(args, 0)
         if d is None: return fail
         t, n = skipSpaces(args, n)
@@ -678,7 +701,7 @@ class engine():
             # c += (i-l) * " "
             # right pading with zeroes
             c += (i-l) * "\0"
-            # return integer array
+            # return integer arraylabels list
             return [(ord(x) & self.MSK) for x in c], n
         # try integer list
         c, n = getintlist(s, p)
@@ -752,37 +775,45 @@ class engine():
 # ---- ---- ---- ---- jump opcodes
 
     # general jump method
-
     def opJMP(self, args, ip, cc, header = "", 
             op = "JMP", condition = True):
-        # debug flag
-        dl = self.DBG[f'op{op}']
-        # get identifier
-        l, n = self.getReference(args, 0)
-        # check for label
-        if l is not None: 
-            if condition:
-                # compute destination line
-                ip = self.ll[l]
-                # jump to reference address
-                if dl: self.log(f"{header}{op} to {l}:{ip+1}")
-                return True, ip, cc+1
-            else:
-                # continue to next line
-                if dl: self.log(f"{header}{op} continue")
-                return True, ip+1, cc+1
-        # parse fail
-        self.log(f"{op} error: a reference is expected")
-        return False, ip+1, cc
+        # init vars
+        dl, adr = self.DBG[f'op{op}'], None
+        # use register
+        R, n = self.getRegisterList(args, 0)
+        if R is not None:
+            # computer line address
+            adr, wgt = 0, 1
+            for r in R:
+                # add register value with weight
+                adr += self.REGS[r]*wgt
+                # increase weight
+                wgt *= self.CB
+        # use constant
+        else:
+            r, n = self.getReference(args, 0)
+            if r is not None:
+                adr = self.ll[r]
+        # failed to get address
+        if adr is None: 
+            # parse fail
+            self.log(f"{op} error: parsing failed.")
+            return False, ip+1, cc
+        # jump
+        if condition:
+            if dl: self.log(f"{header}{op} to {l}:{ip+1}")
+            return True, adr, cc+1        
+        # continue
+        else:
+            if dl: self.log(f"{header}{op} continue")
+            return True, ip+1, cc+1
 
     # jump if zero (Z set)
-
     def opJZE(self, args, ip, cc, header = ""):
         Z = self.REGS["STATUS"]  & self.FLAGS["Z"] > 0
         return self.opJMP(args, ip, cc, header, "JZE", Z)
 
     # jump if non zero (Z clear)
-
     def opJNZ(self, args, ip, cc, header = ""):
         Z = self.REGS["STATUS"]  & self.FLAGS["Z"] > 0
         return self.opJMP(args, ip, cc, header, "JNZ", not Z)
