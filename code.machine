@@ -1,0 +1,23 @@
+#!./engine__004.py
+# file: code.machine
+# created = 17 jan 2022
+# author = Roch Schanen
+
+# "C": 0b0001, # "carry" bit
+# "O": 0b0010, # "overflow" bit
+# "Z": 0b0100, # "zero" bit
+# "N": 0b1000, # "Negative sign" bit
+
+jmp start
+
+x: mem 1024 = "ABCDEF"
+y: mem 1024 = 20, 30
+
+start:
+
+xfr r0 y+1 $0
+xfr r1 y+1 $1
+
+xfr r2 [r0, r1]
+
+dsp r2
