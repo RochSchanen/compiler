@@ -1,16 +1,17 @@
 #!/usr/bin/python3
 # file: engine__003.py
 # created = 11 September 2021
-# modified: 5 January 2022
+# modified: 30 January 2022
 # author = Roch Schanen
  
 """
 A simple but flexible core engine.
-The code, composed of a string array,
+The code, stored in a string array,
 is interpreted line by line. A first
 pass determines labels and reserves
-memory. This engine emulates our FPGA
-softcore processor coupled with a RAM
+memory. This engine should emulate
+our FPGA softcore processor coupled
+with a standard static RAM.
 """
 
 # standard modules
@@ -674,7 +675,9 @@ class engine():
                     "larger than allocated bytes.")
                 return None, p
             # right pading with spaces
-            c += (i-l) * " "
+            # c += (i-l) * " "
+            # right pading with zeroes
+            c += (i-l) * "\0"
             # return integer array
             return [(ord(x) & self.MSK) for x in c], n
         # try integer list

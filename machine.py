@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # file: machine.py
 # created = 17 january 2022
-# modified: 17 january 2022
+# modified: 30 january 2022
 # author = Roch Schanen
  
 #######################################################
