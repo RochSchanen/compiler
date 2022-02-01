@@ -9,13 +9,13 @@
 fc = "./engine.cfg"
 
 DBG = [
-    # 'CONFIG',    'CONST',    'REGISTERS',    'LOAD',
+    'CONFIG',    'CONST',    'REGISTERS',    'LOAD',
     # 'PARSELINE',
-    # "opNOP",
-    # "opXFR",
-    # "opJMP",    "opJNZ",    "opJZE",
-    # "opADC",    "opSHR",    "opSHL",
-    # "opAND",    "opIOR",    "opEOR",
+    "opNOP",
+    "opXFR",
+    "opJMP",    "opJNZ",    "opJZE",
+    "opADC",    "opSHR",    "opSHL",
+    "opAND",    "opIOR",    "opEOR",
     ]
 
 fp = "./code.machine"
@@ -38,8 +38,9 @@ if en == "./engine__003.py": from engine.engine__003 import engine
 if en == "./engine__004.py": from engine__004 import engine
 
 # instanciate engine
-EGN = engine(DBG,fc)
+EGN = engine(DBG, fc)
 # load machine code
 if EGN.load(ft):
-	# run machine code
-	EGN.processCode()
+    pass
+# 	# run machine code
+# 	EGN.processCode()

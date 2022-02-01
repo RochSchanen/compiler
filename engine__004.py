@@ -117,7 +117,7 @@ def getInt(bs, p):
 # get an alphanumeric sequence
 def getId(bs, p):
     # define characters sets
-    A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_"
     AN = A + "0123456789"
     # record start
     n = p
@@ -777,36 +777,53 @@ class engine():
     # general jump method
     def opJMP(self, args, ip, cc, header = "", 
             op = "JMP", condition = True):
+
         # init vars
-        dl, adr = self.DBG[f'op{op}'], None
+        dl = self.DBG[f'op{op}']
+
         # use register
+
         R, n = self.getRegisterList(args, 0)
         if R is not None:
+            
             # computer line address
-            adr, wgt = 0, 1
+            adr, wgt, msg = 0, 1, "["
             for r in R:
                 # add register value with weight
                 adr += self.REGS[r]*wgt
                 # increase weight
                 wgt *= self.CB
+                # update message
+                msg = f"{msg}{r}, "
+            # close bracket
+            msg = f"{msg[:-2]}]"
+
+            #jump
+            if condition:
+                if dl: self.log(f"{header}{op} to {msg}:{adr+1}")
+                return True, adr, cc+1
+
+            # continue
+            else:
+                if dl: self.log(f"{header}{op} continue")
+                return True, ip+1, cc+1
+
         # use constant
-        else:
-            r, n = self.getReference(args, 0)
-            if r is not None:
-                adr = self.ll[r]
-        # failed to get address
-        if adr is None: 
-            # parse fail
-            self.log(f"{op} error: parsing failed.")
-            return False, ip+1, cc
-        # jump
-        if condition:
-            if dl: self.log(f"{header}{op} to {l}:{ip+1}")
-            return True, adr, cc+1        
-        # continue
-        else:
-            if dl: self.log(f"{header}{op} continue")
-            return True, ip+1, cc+1
+
+        r, n = self.getReference(args, 0)
+        if r is not None:
+
+            adr = self.ll[r]
+
+            # jump
+            if condition:
+                if dl: self.log(f"{header}{op} to {r}:{adr+1}")
+                return True, adr, cc+1        
+
+            # continue
+            else:
+                if dl: self.log(f"{header}{op} continue")
+                return True, ip+1, cc+1
 
     # jump if zero (Z set)
     def opJZE(self, args, ip, cc, header = ""):
@@ -1086,6 +1103,7 @@ class engine():
                 continue
         # compute address width and mask
         w, l = 0, len(self.MM)-1
+        if l < 0: l = 0
         while l: w, l = w+1, l>>1
         self.AWM = 2**w-1
         # display summery
@@ -1221,9 +1239,9 @@ if __name__ == "__main__":
     EGN = engine([
         # 'PARSELINE',
         'LOAD',
-        'CONST',
-        'CONFIG',
-        'REGISTERS',
+        # 'CONST',
+        # 'CONFIG',
+        # 'REGISTERS',
         "opXFR",
         "opNOP",
         "opJMP",
