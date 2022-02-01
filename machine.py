@@ -9,7 +9,7 @@
 fc = "./engine.cfg"
 
 DBG = [
-    'CONFIG',    'CONST',    'REGISTERS',    'LOAD',
+    # 'CONFIG',    'CONST',    'REGISTERS',    'LOAD',
     # 'PARSELINE',
     "opNOP",
     "opXFR",
@@ -41,6 +41,5 @@ if en == "./engine__004.py": from engine__004 import engine
 EGN = engine(DBG, fc)
 # load machine code
 if EGN.load(ft):
-    pass
-# 	# run machine code
-# 	EGN.processCode()
+	# run machine code
+	EGN.processCode()

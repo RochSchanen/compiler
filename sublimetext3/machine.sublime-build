@@ -1,0 +1,4 @@
+{
+    "cmd": ["./machine.py", "$file"],
+    "file_patterns": ["*.machine"],
+}

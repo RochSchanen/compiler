@@ -777,15 +777,15 @@ class engine():
     # general jump method
     def opJMP(self, args, ip, cc, header = "", 
             op = "JMP", condition = True):
-
         # init vars
         dl = self.DBG[f'op{op}']
-
         # use register
-
         R, n = self.getRegisterList(args, 0)
         if R is not None:
-            
+            # check end of line
+            if not EndOfString(args, n):
+                self.log(f'{header}{op} error: parsing failed')
+                return False, ip+1, cc
             # computer line address
             adr, wgt, msg = 0, 1, "["
             for r in R:
@@ -797,33 +797,33 @@ class engine():
                 msg = f"{msg}{r}, "
             # close bracket
             msg = f"{msg[:-2]}]"
-
             #jump
             if condition:
                 if dl: self.log(f"{header}{op} to {msg}:{adr+1}")
                 return True, adr, cc+1
-
             # continue
             else:
                 if dl: self.log(f"{header}{op} continue")
                 return True, ip+1, cc+1
-
         # use constant
-
         r, n = self.getReference(args, 0)
         if r is not None:
-
+            # check end of line
+            if not EndOfString(args, n):
+                self.log(f'{header}{op} error: parsing failed')
+                return False, ip+1, cc
             adr = self.ll[r]
-
             # jump
             if condition:
                 if dl: self.log(f"{header}{op} to {r}:{adr+1}")
                 return True, adr, cc+1        
-
             # continue
             else:
                 if dl: self.log(f"{header}{op} continue")
                 return True, ip+1, cc+1
+        # fail parse
+        self.log(f'{header}{op} error: parsing failed')
+        return False, ip+1, cc
 
     # jump if zero (Z set)
     def opJZE(self, args, ip, cc, header = ""):
@@ -1264,15 +1264,21 @@ if __name__ == "__main__":
 
 """
 
+- fix line numbering gap by adding dummy line
+at the start of the string array: sync editor
+numbering with line index. 
+
+- check systematically EndOfString parsing.
+
 - improve parsing errors ouput infos
 
 - import/export memory from/to file
 
 - you cannot imput file during execution but
-you can merge several files during loading
-I need to check on this: add header to labels
+you can merge several files during loading:
+add extra headers (file name?) to labels
 
-- use flag bits as values: is it necessary?
-decide on what syntax to use
+- how to use flag bits values: use flag
+names in syntax: define new syntax.
 
 """

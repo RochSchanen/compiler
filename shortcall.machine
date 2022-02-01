@@ -1,0 +1,25 @@
+#!./engine__004.py
+# file: shortcall.machine
+# created = 01 Feb 2022
+# author = Roch Schanen
+
+# "C": 0b0001, # "carry" bit
+# "O": 0b0010, # "overflow" bit
+# "Z": 0b0100, # "zero" bit
+# "N": 0b1000, # "Negative sign" bit
+
+# short call routine example
+
+jmp start
+
+SetR0:                          # short call routine
+        xfr r0 1                # set r0 flag
+        jmp r7                  # short call return
+
+start:                          # code start
+        dsp r0                  # check flag is clear
+        xfr r7 continue         # setup return line
+        jmp SetR0               # execute routine
+
+continue:                       # define return line
+        dsp r0                  # check flag is set

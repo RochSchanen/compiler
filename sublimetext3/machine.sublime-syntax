@@ -1,0 +1,52 @@
+%YAML 1.2
+---
+# See http://www.sublimetext.com/docs/3/syntax.html
+file_extensions:
+  - machine
+scope: source.machine
+contexts:
+  prototype:
+    - include: comments
+  main:
+    - include: controls
+    - include: opcodes
+    - include: numbers
+    - include: labels
+    - include: registers
+    - include: symbols
+    - include: strings
+  comments:
+    - match: '#'
+      scope: machine.comment
+      push:
+        - meta_scope: machine.comment
+        - match: $\n?
+          pop: true
+  controls:
+    - match: '\b(?i)(dsp|mem)\b'
+      scope: machine.control
+  symbols:
+    - match: '\$|\+|=|\[|\]|\,'
+      scope: machine.symbol
+  opcodes:
+    - match: '\b(?i)(nop|xfr|adc|shl|shr|and|ior|eor|jmp|jnz|jze)\b'
+      scope: machine.opcode
+  numbers:
+    - match: '\b(-)?[0-9.]+\b'
+      scope: machine.number
+  labels:
+    - match: '\b\w+\b:'
+      scope: machine.label
+  registers:
+    - match: '\b(?i)(status|r[0-9]|r[0-9]+)\b'
+      scope: machine.register
+  strings:
+    - match: '"'
+      scope: machine.string.begin
+      push: inside_string
+  inside_string:
+    - meta_include_prototype: false
+    - meta_scope: machine.stringcontext
+    - match: '"'
+      scope: machine.string.end
+      pop: true

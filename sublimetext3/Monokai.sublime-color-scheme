@@ -1,0 +1,43 @@
+{
+	"rules": [
+		{
+			"scope": "machine.control",
+			"foreground": "salmon",
+			"font_style": "italic"
+		},
+		{
+			"scope": "machine.symbol",
+			"foreground": "salmon",
+		},
+		{
+			"scope": "machine.stringcontext",
+			"foreground": "aqua",
+			// "font_style": "bold",
+		},
+		{
+			"scope": "machine.opcode",
+			"foreground": "lime",
+			"font_style": "bold"
+		},
+		{
+			"scope": "machine.comment",
+			"foreground": "grey",
+			"font_style": "italic"
+		},
+		{
+			"scope": "machine.number",
+			"foreground": "aqua",
+			"font_style": "italic"
+		},
+		{
+			"scope": "machine.label",
+			"foreground": "white",
+			// "font_style": "italic"
+		},
+		{
+			"scope": "machine.register",
+			"foreground": "magenta",
+			"font_style": "italic"
+		},
+	]
+}
