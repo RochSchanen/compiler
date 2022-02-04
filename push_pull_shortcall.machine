@@ -1,0 +1,75 @@
+#!./engine__004.py
+# file: code1.machine
+# created = 30 jan 2022
+# author = Roch Schanen
+
+# "C": 0b0001, # "carry" bit
+# "O": 0b0010, # "overflow" bit
+# "Z": 0b0100, # "zero" bit
+# "N": 0b1000, # "Negative sign" bit
+
+# push/pull short call
+
+jmp start
+
+stack: mem 4 = 5, 5, 5, 5
+
+# push and pull use registers as follow
+# r1 is the stack pointer
+# r2 is the value to push
+# r3 is used for comparison
+# r4 n.c.
+# r5 n.c.
+# r6 is the error flag
+# r7 is the return address
+
+push1:  ###################################################  
+        xfr r0 status           # preserve status register
+        xfr r3 stack+4          # compare to stack max
+        eor r3 r1               # stack full?
+        jnz push1_cont          # no -> continue
+        xfr r6 1                # set error
+        jmp r7                  # short return
+
+push1_cont:                     # continue
+        xfr [r1] r2             # store r2 onto stack
+        adc r1 +1               # increment stack pointer
+        xfr r6 0                # clear error
+        xfr status r0           # restore status
+        jmp r7                  # short return
+
+pull1:  ###################################################
+        xfr r0 status           # preserve status register
+        xfr r3 stack+0          # compare to stack min
+        eor r3 r1               # stack empty?
+        jnz pull1_cont          # no -> continue
+        xfr r6 1                # set error
+        jmp r7                  # short return
+
+pull1_cont:                     # continue
+        adc r1 -1               # decrement stack pointer
+        xfr r2 [r1]             # load r2 from stack
+        xfr status r0           # restore status
+        xfr r6 0                # clear error
+        jmp r7                  # short return
+
+start:  ###################################################
+
+        dsp [stack]
+
+        xfr r7 _01      # setup short return 
+        xfr r2 10       # load value
+        jmp push1       # push r2
+_01:
+
+        xfr r7 _02      # setup short return 
+        xfr r2 20       # load value
+        jmp pull1       # push r2
+_02:
+
+        dsp r2
+
+        dsp [stack+0]
+        dsp [stack+1]
+
+error:

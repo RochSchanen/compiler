@@ -19,7 +19,7 @@ SetR0:                          # short call routine
 start:                          # code start
         dsp r0                  # check flag is clear
         xfr r7 continue         # setup return line
-        jmp SetR0               # execute routine
+        jmp Setr0               # execute routine
 
 continue:                       # define return line
         dsp r0                  # check flag is set

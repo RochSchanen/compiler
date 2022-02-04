@@ -530,21 +530,15 @@ class engine():
         return R, n
 
     def getrefsrc(self, s, p):
-
         fail = None, p, ""
-
         # get reference
         r, n = self.getReference(s, p)
         if r is None: return fail
-        
         # line pointer
-
         if not r in self.ml.keys():
-
             # init vars
             v = self.ll[r] # value
             m = f"{r}:{v}" # message
-
             # check for word filter
             t, k = skipSpaces(s, n)
             if s[k] == "$":
@@ -555,15 +549,11 @@ class engine():
                 # continue
                 j = i * self.CFG["BITS"]
                 n, v, m = k, (v >> j) & self.MSK, f"{m} ${i}"
-
             return v, n, m
-
         # memory pointer
-
         # init vars
         v = self.ml[r] # value
         m = f"{r}:{v}" # message
-
         # check for offset
         t, k = skipSpaces(s, n)
         if s[k] == "+":
@@ -574,7 +564,6 @@ class engine():
             if i is None: return fail
             # continue
             n, v, m = k, v + i, f"({m}+{i}):{v+i}"
-
         # check for word filter
         t, k = skipSpaces(s, n)
         if s[k] == "$":
@@ -585,7 +574,6 @@ class engine():
             # continue
             j = i * self.CFG["BITS"]
             n, v, m = k, (v >> j) & self.MSK, f"{m} ${i}"
-
         return v, n, m
 
     def parseMemoryAddress(self, s, p, db):
@@ -749,7 +737,6 @@ class engine():
         if s is not None:
             v = self.MM[s]
             self.log(f'{header}{m}:{self.usfm(v)}')
-            print("opDSP", args, n)
             return EndOfString(args, n), ip+1, cc
         # parsing failed
         self.log(f'{header} DSP error: invalid argument')
@@ -799,7 +786,7 @@ class engine():
             msg = f"{msg[:-2]}]"
             #jump
             if condition:
-                if dl: self.log(f"{header}{op} to {msg}:{adr+1}")
+                if dl: self.log(f"{header}{op} to {msg}:{adr}")
                 return True, adr, cc+1
             # continue
             else:
@@ -815,7 +802,7 @@ class engine():
             adr = self.ll[r]
             # jump
             if condition:
-                if dl: self.log(f"{header}{op} to {r}:{adr+1}")
+                if dl: self.log(f"{header}{op} to {r}:{adr}")
                 return True, adr, cc+1        
             # continue
             else:
@@ -1071,6 +1058,8 @@ class engine():
         if dl: self.log("load code:")
         # append to list of instructions
         self.il += s.split("\n")
+        # add dummy first line to fix line sync with editor
+        self.il.insert(0,"")
         # collect all references in one pass
         for i, s in enumerate(self.il):
             # parse
@@ -1091,7 +1080,7 @@ class engine():
             # add label to reference list
             if dl: 
                 self.log(f" new label '{lbl}'", end = "")
-                self.log(f" at line {i+1}")
+                self.log(f" at line {i}")
             self.ll[lbl] = i
             # check for special opcode MEM
             if opc == "MEM":
@@ -1103,8 +1092,11 @@ class engine():
                 continue
         # compute address width and mask
         w, l = 0, len(self.MM)-1
+        # prevent infinite loop when memory size is null
         if l < 0: l = 0
+        # compute width
         while l: w, l = w+1, l>>1
+        # get mask
         self.AWM = 2**w-1
         # display summery
         if dl: 
@@ -1138,8 +1130,9 @@ class engine():
         # reach for next argument
         t, n = skipSpaces(args, n)
         # create default array
-        # c = [1]*i
-        c = list(range(i))
+        c = [0]*i # zero set
+        # c = list(range(i)) # linear set
+        # make the option random set
         # check for explicit content
         if args[n] == "=":
             # reach for next argument
@@ -1263,6 +1256,8 @@ if __name__ == "__main__":
 # TODO
 
 """
+
+- add default memory filling option in configuration file
 
 - fix line numbering gap by adding dummy line
 at the start of the string array: sync editor
