@@ -58,7 +58,8 @@ def setDebugOtpions(dico, opts):
             dico[o] = True
     return
 
-# convert a character string to an integer value (no checks)
+# convert a character string
+# to an integer value (no checks)
 def strtoint(bs, base = 10):
     conversionTable = {
         '0':0,  '1':1,  '2':2,  '3':3,
@@ -104,8 +105,9 @@ def getsint(bs, p, base = 10):
 def getInt(bs, p):
     prefixSet = {
         "0X":16,
-        "0B":2,
+        "0D":10,
         "0O":8,
+        "0B":2,
         }
     s, n = getsign(bs, p)
     b, cc, o = 10, bs[n:n+2].upper(), 0
@@ -223,11 +225,13 @@ class engine():
 
     DBG = {
 
+        # system
+        'NOC'       : False,
+        'LOAD'      : False,
         'CONST'     : False,
         'CONFIG'    : False,
         'REGISTERS' : False,
         'PARSELINE' : False,
-        'LOAD'      : False,
 
         # no operations
         'opNOP'     : False,
@@ -433,26 +437,17 @@ class engine():
 
 # ---- ---- ---- ---- PARSING METHODS
 
-    # the parse fail with pointer
-    # to character must be extended
-
+    # pointer to char fail
     def parseFail(self, s, p, ip = None):
-        # format end-of-line
-        s = s.replace("\0", "\\0")
-        if ip is None:
-            self.log(f"Parsing failed:")
-        else:
-            self.log(f"Parsing failed at line {ip}:")
-        self.log(s)
-        self.log(p*"." + "^" + (len(s)-p-1)*".")
-        return None, f"FAIL", ip
+        msg = s.replace("\0", "\\0")
+        msg = f"{msg}\n{p*'.'}^{(len(s)-p-1)*'.'}"
+        return msg
 
-    # parse a single line (no interpretation)
-    # split label from opcode from arguments
-    
+    # parse a line without interpretation
+    # split label from opcode from arguments    
     def parseLine(self, s, i = None):
         # log tab length
-        TAB = 2
+        TAB = 4
         # debug flag
         dl = self.DBG['PARSELINE']
         # fix empty string
@@ -461,14 +456,17 @@ class engine():
         if s[-1] != "\0": s += "\0"
         # log string to parse
         if dl:
-            msg = s[:-1].replace(" ", "\u25E6")
-            # msg = s[:-1].replace(" ", ".")
-            self.log(f'\nPARSE: "{msg}\\0"')
+            msg = s[:-1].replace(" ", "\u2591")
+            msg = f'PARSE: "{msg}\\0"'
+            if i is not None:
+                msg = f'{i:6} {msg}'
         # skip heading spaces
         t, n = skipSpaces(s, 0)
         # test empty line (no label, implicit nop, no args)
         if s[n] == "\0":
-            if dl: self.log(f"{'return no code':{TAB}s} 'NOC'")
+            if dl & self.DBG['NOC']:
+                self.log(f"\n{msg}")
+                self.log(f"{'-':>8} opcode: 'NOC'")
             return "", "NOC", "\0"
         # check for label
         lbl, n = getLabel(s, n)
@@ -476,20 +474,21 @@ class engine():
         t, n = skipSpaces(s, n)
         # check no opcode (label, implicit nop, no args)
         if s[n] == "\0":
-            if dl: self.log(f"{'return no code':{TAB}s} 'NOC'")
+            if dl & self.DBG['NOC']:
+                self.log(f"\n{msg}")
+                self.log(f"{'-':>8} opcode: 'NOC'")
             return lbl, "NOC", "\0"
         # get the opcode
         opc, p = getId(s, n)
-        # fail check 
+        # opcode fail 
         if opc is None:
-            self.log(f'opcode expected')
-            return self.parseFail(s, n, i)
-        # check opCode
+            return None, f"FAIL", self.parseFail(s, n, i)
         if not opc in self.OPCODES.keys():
-            self.log(f'opcode unknown')
-            return self.parseFail(s, n, i)
+            return None, f"FAIL", self.parseFail(s, n, i)
         # log
-        if dl: self.log(f"{' opcode':{TAB}s} '{opc}'")
+        if dl:
+            self.log(f"\n{msg}")
+            self.log(f"{'-':>6} opcode:'{opc}'")
         # skip spaces to reached arguments
         t, n = skipSpaces(s, p)
         # collect arguments
@@ -683,7 +682,7 @@ class engine():
             if l > i:
                 self.log(
                     "error: string length is " \
-                    "larger than allocated bytes.")
+                    "larger than allocated memory.")
                 return None, p
             # right pading with spaces
             # c += (i-l) * " "
@@ -699,7 +698,7 @@ class engine():
             if l > i:
                 self.log(
                     "error: integer list length is " \
-                    "larger than allocated bytes.")
+                    "larger than allocated memory.")
                 return None, p
             # right paddding with zeros
             c += (i-l)*[0]
@@ -755,7 +754,7 @@ class engine():
             self.log(f"NOP error: no argument expected")
             return False, ip, cc 
         # log
-        if dl: self.log(f"{header}nop")
+        if dl: self.log(f"{header}NOP")
         # done
         return True, ip+1, cc+1
 
@@ -765,8 +764,9 @@ class engine():
     def opJMP(self, args, ip, cc, header = "", 
             op = "JMP", condition = True):
         # init vars
-        dl = self.DBG[f'op{op}']
-        # use register
+        dl, adr, msg = self.DBG[f'op{op}'], None, None
+
+        # check for "register list" parameter
         R, n = self.getRegisterList(args, 0)
         if R is not None:
             # check end of line
@@ -784,26 +784,20 @@ class engine():
                 msg = f"{msg}{r}, "
             # close bracket
             msg = f"{msg[:-2]}]"
-            #jump
-            if condition:
-                if dl: self.log(f"{header}{op} to {msg}:{adr}")
-                return True, adr, cc+1
-            # continue
-            else:
-                if dl: self.log(f"{header}{op} continue")
-                return True, ip+1, cc+1
-        # use constant
+        # check for "constant" parameter
         r, n = self.getReference(args, 0)
         if r is not None:
             # check end of line
             if not EndOfString(args, n):
                 self.log(f'{header}{op} error: parsing failed')
                 return False, ip+1, cc
-            adr = self.ll[r]
+            adr, msg = self.ll[r], r
+        # branch: jump or continue
+        if adr is not None:
             # jump
             if condition:
-                if dl: self.log(f"{header}{op} to {r}:{adr}")
-                return True, adr, cc+1        
+                if dl: self.log(f"{header}{op} to {msg}:{adr}")
+                return True, adr, cc+1
             # continue
             else:
                 if dl: self.log(f"{header}{op} continue")
@@ -1061,13 +1055,15 @@ class engine():
         # add dummy first line to fix line sync with editor
         self.il.insert(0,"")
         # collect all references in one pass
-        for i, s in enumerate(self.il):
+        for i, s in enumerate(self.il[1:]):
             # parse
             lbl, opc, args = self.parseLine(s, i)
             # exit on failure
             if opc == "FAIL":
-                self.log(f"fail to parse line {i}:")
-                self.log(self.il[i])
+                self.log(f"\nparse error while loading code.")
+                self.log(f"failed to parse opcode at line {i}.")
+                self.log(f"{args}")
+                self.log(f"exiting...")
                 return False
             # no label
             if not lbl: continue
@@ -1079,7 +1075,7 @@ class engine():
                 return False
             # add label to reference list
             if dl: 
-                self.log(f" new label '{lbl}'", end = "")
+                self.log(f"{'-':>6} new label '{lbl}'", end = "")
                 self.log(f" at line {i}")
             self.ll[lbl] = i
             # check for special opcode MEM
@@ -1199,19 +1195,17 @@ class engine():
         self.log(f" ----{t}------{t}-----------")
         # while successfull, continue processing
         while r:
-            # parse
+            # label and opcode already checked during loading
             lbl, opc, args = self.parseLine(self.il[ip], ip)
-            # break on fail
-            if opc == "FAIL":
-                self.log(f"fail to parse line {ip}:")
-                self.log(self.il[ip])
-                return
-            # display
-            h = f" {ip+1:04}{t}{cc:06}{t}"
+            # header
+            h = f" {ip:04}{t}{cc:06}{t}"
             # execute and display
             r, ip, cc = self.OPCODES[opc](self, args, ip, cc, h)
             # interupt on failure
-            if not r: return
+            if not r:
+                self.log(f"error while running code at line {ip-1}.")
+                self.log(f"exiting...")
+                return
             # break on last instruction
             if ip == len(self.il):
                 self.log(f"\nreached end of code.")
@@ -1226,42 +1220,25 @@ class engine():
 
 if __name__ == "__main__":
 
+    from os import system
+    # default test code
     fp = "./code.machine"
-    if len(argv)>1: fp = argv[1]        
+    # alternative code
+    if len(argv)>1: fp = argv[1]
+    # execute root script         
+    system(f"./machine.py {fp}")
+    # execute tests
 
-    EGN = engine([
-        # 'PARSELINE',
-        'LOAD',
-        # 'CONST',
-        # 'CONFIG',
-        # 'REGISTERS',
-        "opXFR",
-        "opNOP",
-        "opJMP",
-        "opJNZ",
-        "opJZE",
-        "opADC",
-        "opSHR",
-        "opSHL",
-        "opAND",
-        "opIOR",
-        "opEOR",
-        ], "engine.cfg")
-
-    fh = open(fp, 'r')
-    EGN.load(fh.read())
-    fh.close()
-    EGN.processCode()
 
 # TODO
 
 """
 
-- add default memory filling option in configuration file
+- write a test code to check all basic grammar.
 
-- fix line numbering gap by adding dummy line
-at the start of the string array: sync editor
-numbering with line index. 
+- add display options: message string, tron, trof
+
+- add default memory filling option in configuration file
 
 - check systematically EndOfString parsing.
 

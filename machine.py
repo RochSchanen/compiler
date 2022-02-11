@@ -9,8 +9,12 @@
 fc = "./engine.cfg"
 
 DBG = [
-    # 'CONFIG',    'CONST',    'REGISTERS',    'LOAD',
+    # 'NOC',
     # 'PARSELINE',
+    'CONFIG',
+    'CONST',
+    'REGISTERS',
+    'LOAD',
     "opNOP",
     "opXFR",
     "opJMP",    "opJNZ",    "opJZE",

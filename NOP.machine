@@ -1,0 +1,23 @@
+#!./engine__004.py
+# file: NOP.machine
+# created = 08 feb 2022
+# author = Roch Schanen
+
+# "C": 0b0001, # "carry" bit
+# "O": 0b0010, # "overflow" bit
+# "Z": 0b0100, # "zero" bit
+# "N": 0b1000, # "Negative sign" bit
+
+# comments, labels and the NOP opcode
+
+        nop
+        nop     # comment
+l1:     nop
+l2:     nop     # comment
+
+# the syntax is not case sensitive
+
+        NOP
+        NOP     # comment
+L3:     NOP
+L4:     NOP     # comment

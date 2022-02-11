@@ -1,5 +1,5 @@
 #!./engine__004.py
-# file: JMP.machine
+# file: JMP1.machine
 # created = 08 feb 2022
 # author = Roch Schanen
 
@@ -8,10 +8,9 @@
 # "Z": 0b0100, # "zero" bit
 # "N": 0b1000, # "Negative sign" bit
 
-jmp start
+# should jump the first nop 
 
+		jmp start
 		nop
-
 start:
-
 		nop

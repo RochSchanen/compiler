@@ -1,0 +1,67 @@
+#!./engine__004.py
+# file: XFR1.machine
+# created = 08 feb 2022
+# author = Roch Schanen
+
+# "C": 0b0001, # "carry" bit
+# "O": 0b0010, # "overflow" bit
+# "Z": 0b0100, # "zero" bit
+# "N": 0b1000, # "Negative sign" bit
+
+# constant to register:
+# --------------------
+# should give a signed value of -1
+# when the data bit width is 8:
+
+        xfr r0 255
+        xfr r0 0b11111111
+        xfr r0 0xFF
+        xfr r0 0d255
+        xfr r0 0o377
+
+# should gives +1:
+# when the data bit width is 8:
+
+        xfr r0 -255
+        xfr r0 -0b11111111
+        xfr r0 -0xFF
+        xfr r0 -0d255
+        xfr r0 -0o377
+
+# values are coerced to the least significant word
+# for 8 bits words, the limit is 255
+# for 16 bits words, the limit is 65535
+# etc...
+
+# should give a value of 0
+# when the data bit width is 8:
+
+        xfr r0 256
+        xfr r0 0b100000000
+        xfr r0 0x100
+        xfr r0 0d256
+        xfr r0 0o400
+
+# should give 1
+# when the data bit width is 8:
+
+        xfr r0 257
+        xfr r0 0b100000001
+        xfr r0 0x101
+        xfr r0 0d257
+        xfr r0 0o401
+
+# register to register
+# --------------------
+
+        xfr r0 r1
+        xfr r0 status
+
+# reference to register
+# ---------------------
+
+l1:
+        xfr r0 l1
+        xfr r0 l1 $0    # coerce to least significant word
+        xfr r0 l1 $1    # coerce to next to least significant word
+
