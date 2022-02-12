@@ -104,6 +104,7 @@ def getsint(bs, p, base = 10):
 # get signed integer including a base prefix
 def getInt(bs, p):
     prefixSet = {
+        "0H":16,
         "0X":16,
         "0D":10,
         "0O":8,
@@ -1052,10 +1053,13 @@ class engine():
         if dl: self.log("load code:")
         # append to list of instructions
         self.il += s.split("\n")
-        # add dummy first line to fix line sync with editor
+        # add dummy first line to fix line sync with editor numbering
         self.il.insert(0,"")
-        # collect all references in one pass
-        for i, s in enumerate(self.il[1:]):
+        # collect all references in first pass
+        for i, s in enumerate(self.il):
+            # skip dummy line
+            if i==0:
+                continue
             # parse
             lbl, opc, args = self.parseLine(s, i)
             # exit on failure
@@ -1234,15 +1238,19 @@ if __name__ == "__main__":
 
 """
 
-- write a test code to check all basic grammar.
+- write a test code to check all basic grammar:
+    NOP, JMP1, XFR1 done so far
 
-- add display options: message string, tron, trof
+- mem: make size declaration optional. Add mixture
+    of strings and numbers. for example:
+    LABEL: MEM "HELLO", 0
 
-- add default memory filling option in configuration file
+- add more display features: message, trace on, trace off
 
-- check systematically EndOfString parsing.
+- add default memory filling option in configuration file:
+    zeroes or random values
 
-- improve parsing errors ouput infos
+- systematically check all EndOfString parsing.
 
 - import/export memory from/to file
 
